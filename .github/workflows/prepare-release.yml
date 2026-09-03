@@ -38,12 +38,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CURRENT_VERSION="$(python3 - <<'PY'
-          from pathlib import Path
-          from scripts.build_release_artifacts import validate_versions
-          print(validate_versions(Path.cwd()))
-          PY
-          )"
+          # build_release_artifacts.py only patches sys.path for release_config
+          # when run standalone (__package__ is empty); invoke it as a script,
+          # not a package import, matching release.yml's working pattern.
+          CURRENT_VERSION="$(python3 scripts/build_release_artifacts.py --validate-only)"
           LATEST_TAG="$(gh api "/repos/${GITHUB_REPOSITORY}/releases/latest" \
             --jq .tag_name 2>/dev/null || true)"
 
@@ -134,7 +132,7 @@ jobs:
           REMOTE_SHA="$(git ls-remote --heads origin "refs/heads/$BRANCH" | awk '{print $1}')"
           git switch --force-create "$BRANCH" origin/main
 
-          VERSION="$(python3 -m scripts.set_version \
+          VERSION="$(python3 scripts/set_version.py \
             --next-from-tags --timezone America/Chicago)"
           git config user.name "$BOT_NAME"
           git config user.email "$BOT_EMAIL"

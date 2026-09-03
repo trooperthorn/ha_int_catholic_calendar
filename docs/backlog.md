@@ -22,5 +22,8 @@
   add its private key as the `RELEASE_AUTOMATION_PRIVATE_KEY` secret. Until
   both exist, the workflow's credential check fails fast with a clear error
   on every Release completion; a release can still be cut manually with
-  `python -m scripts.set_version --next-from-tags --timezone America/Chicago`
-  on a branch, committing the version bump, and merging it.
+  `python scripts/set_version.py --next-from-tags --timezone America/Chicago`
+  on a branch, committing the version bump, and merging it. (The first real
+  run actually failed one step earlier than the credential check, on a
+  `python3 -m scripts.build_release_artifacts` package-import bug; fixed the
+  same day, see `docs/decisions.md`.)
