@@ -1,16 +1,17 @@
 """CatholicCalendar sensor."""
 from __future__ import annotations
 import logging
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, StateType
+from homeassistant.components.sensor import SensorEntity
+
+from homeassistant.helpers.typing import StateType
 
 from homeassistant.util import dt as dt_util
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.const import CONF_NAME
 
 from .calendar_generator import CalendarGenerator
 import datetime
@@ -18,33 +19,20 @@ from .liturgical_grade import LiturgicalGrade
 
 __version__ = "1.0.1"
 
-COMPONENT_REPO = (
-    "https://github.com/jmacri01/homeassistant-custom-components-catholic-calendar"
-)
-
-REQUIREMENTS: list[str] = []
-
-DEFAULT_THUMBNAIL = "https://www.home-assistant.io/images/favicon-192x192-full.png"
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {vol.Required(CONF_NAME): cv.string},
-)
-
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    async_add_devices: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the CatholicCalendar sensor."""
-    async_add_devices(
+    """Set up the CatholicCalendar sensor from a UI config entry."""
+    name = entry.title or "Catholic Calendar"
+
+    async_add_entities(
         [
-            CatholicCalendarSensor(
-                name=config[CONF_NAME],
-            ),
+            CatholicCalendarSensor(name=name, unique_id=entry.entry_id),
         ],
         update_before_add=True,
     )
@@ -58,10 +46,18 @@ class CatholicCalendarSensor(SensorEntity):
     def __init__(
         self: CatholicCalendarSensor,
         name: str,
+        unique_id: str,
     ) -> None:
         """Initialize the CatholicCalendar sensor."""
         self._attr_name = name
+        self._attr_unique_id = unique_id
         self._attr_icon = "mdi:calendar"
+        self._attr_device_info = DeviceInfo(
+            identifiers={("catholic_calendar", unique_id)},
+            name=name,
+            manufacturer="Catholic Calendar",
+            entry_type=DeviceEntryType.SERVICE,
+        )
         self._festivities: dict[datetime.datetime, list[dict[str, str]]] = {}
         self._todays_festivities: list[dict[str, str]] = []
         self._attr_extra_state_attributes = {"festivities": self._todays_festivities}

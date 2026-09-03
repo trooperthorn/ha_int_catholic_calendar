@@ -93,3 +93,36 @@ hassfest and Home Assistant Core both read translations from
 root is never loaded, so the config flow's UI text ("Do you want to set up
 the Catholic Calendar integration?") was not actually reaching users. Moved
 the file into `translations/` with no content changes.
+
+## 2026-09-03: forward the sensor platform through the config entry instead of leaving it as legacy YAML
+
+`sensor.py` used the legacy `PLATFORM_SCHEMA` / `async_setup_platform`
+pattern, but `__init__.py` only ever forwarded the config entry to
+`PLATFORMS = ["calendar"]`. Anyone who added the integration through the UI
+(the only documented path, and the only one `manifest.json`'s
+`"config_flow": true` really supports) never got a sensor entity; the
+platform only ran for a user who separately had a
+`sensor: - platform: catholic_calendar` entry in `configuration.yaml` left
+over from before the config flow existed.
+
+Chose to forward it through the config entry, matching `calendar.py`,
+rather than delete it: converted `CatholicCalendarSensor` to take a
+`unique_id` and a `DeviceInfo` with the same
+`identifiers={("catholic_calendar", entry.entry_id)}` as the calendar
+entity, so both entities group under one device; added
+`sensor.async_setup_entry`; added `"sensor"` to `PLATFORMS` in
+`__init__.py`. Removed `PLATFORM_SCHEMA`, `async_setup_platform`, and the
+now-unused `voluptuous`/`config_validation`/`CONF_NAME` imports, along with
+`COMPONENT_REPO`, `DEFAULT_THUMBNAIL`, and the empty `REQUIREMENTS` list
+(leftover metadata from the pre-config-flow platform era, unreferenced
+anywhere else in the repo).
+
+**Breaking change, not a bug fix with no consequences**: a user who still
+has the legacy `sensor: - platform: catholic_calendar` YAML entry will get
+a platform-not-found error in the log after this update, since
+`async_setup_platform` no longer exists. Existing UI-configured entries
+need no action; the new sensor entity appears automatically on the next
+reload or restart. No import flow was added for the YAML case because the
+platform was never documented as a required or standard setup step (see
+the corrected `README.md`), so there is no known user actually depending on
+it; if one turns up, `docs/backlog.md` is where to record it.

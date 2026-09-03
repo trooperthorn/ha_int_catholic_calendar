@@ -14,26 +14,10 @@ OR
 Copy `/custom_components/catholic_calendar/` to the following directory in Home Assistant:
 `<config directory>/custom_components/catholic_calendar/`
 
-### Add the calendar
-The calendar is set up through the Home Assistant UI: **Settings > Devices &
-Services > Add Integration**, then search for "Catholic Calendar". Only one
-instance is allowed. It takes no configuration.
-
-### Add the sensor (optional, YAML)
-The sensor is a separate legacy YAML platform and is not part of the UI
-config flow above. Add it to `<config directory>/configuration.yaml`:
-
-```yaml
-sensor:
-  - platform: catholic_calendar
-    name: Catholic Calendar
-```
-
-**Configuration variables:**
-
-key | description
-:--- | :---
-**platform (Required)** | The platform name
-**name (Required)** | Name your feed
+### Add the integration
+The calendar and sensor are both set up together through the Home Assistant
+UI: **Settings > Devices & Services > Add Integration**, then search for
+"Catholic Calendar". Only one instance is allowed. It takes no
+configuration.
 
 See `docs/README.md` for design notes, decisions, and open items.
