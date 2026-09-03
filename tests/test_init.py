@@ -22,7 +22,7 @@ async def test_setup_entry_forwards_to_the_calendar_platform(hass):
 
     forward.assert_called_once()
     assert forward.call_args.args[0] is entry
-    assert list(forward.call_args.args[1]) == ["calendar"]
+    assert list(forward.call_args.args[1]) == ["calendar", "sensor"]
 
 
 async def test_unload_entry_unloads_the_calendar_platform(hass):
@@ -44,4 +44,4 @@ async def test_unload_entry_unloads_the_calendar_platform(hass):
         await hass.async_block_till_done()
 
     unload.assert_called_once()
-    assert list(unload.call_args.args[1]) == ["calendar"]
+    assert list(unload.call_args.args[1]) == ["calendar", "sensor"]

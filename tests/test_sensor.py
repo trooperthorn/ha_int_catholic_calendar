@@ -1,37 +1,50 @@
-"""The legacy YAML sensor platform.
-
-See docs/backlog.md: this platform is never forwarded through the config
-entry (__init__.py only forwards "calendar"), so it only runs for a user who
-still has a YAML `sensor: - platform: catholic_calendar` entry. Tested here
-independent of that open question, since the code is still shipped and
-still runs when invoked that way.
-"""
+"""The sensor platform, set up through the config entry alongside calendar."""
 import datetime
 
-from custom_components.catholic_calendar.sensor import CatholicCalendarSensor
+from custom_components.catholic_calendar.sensor import (
+    CatholicCalendarSensor,
+    async_setup_entry,
+)
 
 
-async def test_async_setup_platform_adds_one_sensor_with_the_configured_name(hass):
-    from custom_components.catholic_calendar.sensor import async_setup_platform
-
+async def test_async_setup_entry_adds_one_sensor_named_after_the_entry(hass):
+    entry = type("Entry", (), {"title": "My Parish Calendar", "entry_id": "abc123"})()
     added: list = []
-    await async_setup_platform(
-        hass,
-        {"name": "My Feed"},
-        lambda entities, **_: added.extend(entities),
-    )
+
+    await async_setup_entry(hass, entry, lambda entities, **_: added.extend(entities))
 
     assert len(added) == 1
-    assert added[0].name == "My Feed"
+    sensor = added[0]
+    assert isinstance(sensor, CatholicCalendarSensor)
+    assert sensor.name == "My Parish Calendar"
+    assert sensor.unique_id == "abc123"
+
+
+async def test_async_setup_entry_falls_back_to_a_default_name(hass):
+    entry = type("Entry", (), {"title": None, "entry_id": "abc123"})()
+    added: list = []
+
+    await async_setup_entry(hass, entry, lambda entities, **_: added.extend(entities))
+
+    assert added[0].name == "Catholic Calendar"
+
+
+async def test_sensor_shares_a_device_with_the_calendar_entity(hass):
+    entry = type("Entry", (), {"title": "Catholic Calendar", "entry_id": "abc123"})()
+    added: list = []
+
+    await async_setup_entry(hass, entry, lambda entities, **_: added.extend(entities))
+
+    assert added[0].device_info["identifiers"] == {("catholic_calendar", "abc123")}
 
 
 def test_native_value_is_todays_date():
-    sensor = CatholicCalendarSensor(name="Catholic Calendar")
+    sensor = CatholicCalendarSensor(name="Catholic Calendar", unique_id="abc123")
     assert sensor.native_value == datetime.datetime.now().date()
 
 
 def test_update_loads_this_year_and_next_and_sorts_by_grade():
-    sensor = CatholicCalendarSensor(name="Catholic Calendar")
+    sensor = CatholicCalendarSensor(name="Catholic Calendar", unique_id="abc123")
     sensor.update()
 
     today = datetime.datetime.now().date()
@@ -45,7 +58,7 @@ def test_update_loads_this_year_and_next_and_sorts_by_grade():
 
 
 def test_update_is_idempotent_for_already_loaded_years():
-    sensor = CatholicCalendarSensor(name="Catholic Calendar")
+    sensor = CatholicCalendarSensor(name="Catholic Calendar", unique_id="abc123")
     sensor.update()
     festivity_count_by_date = len(sensor._festivities)
     sensor.update()
