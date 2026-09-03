@@ -17,6 +17,45 @@ now would either fail CI on every push or require faking a passing test
 step. A test suite is a prerequisite, not something to skip past. See
 `docs/backlog.md`.
 
+## 2026-09-03: add a pytest-homeassistant-custom-component test suite, then wire `test.yml` and `release.yml`
+
+Added `tests/` (30 tests: `LiturgicalGrade`, `CalendarGenerator` self-consistency
+checks against the liturgical calendar's own weekday guarantees, the config
+flow, config-entry setup/unload, the calendar entity's event loading and
+filtering with the RSS fetch mocked out, the RSS feed parser in isolation,
+the legacy sensor platform, and `translations/en.json` content). Run with
+`pytest-homeassistant-custom-component==0.13.362` under Python 3.14 in WSL
+(this repo's own dev environment has no native Linux `fcntl`, which the
+harness imports; native Windows cannot run it). All 30 pass, and `ruff` and
+`mypy --python-version 3.14` are both clean.
+
+Writing the tests surfaced three real bugs, fixed here rather than only
+noted, since each now has a regression test:
+- `calendar.py` used `if not channel:` on an `xml.etree.ElementTree` Element
+  after `root.find('channel')` (a documented Python footgun: an Element with
+  no children is falsy even when found). Changed to `if channel is None:`.
+- `calendar.py` built `_attr_device_info` as a raw `dict` with
+  `"entry_type": "service"` (a plain string); `DeviceInfo` is a `TypedDict`
+  expecting `DeviceEntryType.SERVICE`. Switched to constructing `DeviceInfo`
+  properly.
+- `sensor.py` typed `native_value` as returning `StateType` but actually
+  returns a `datetime.date`; `SensorEntity.native_value`'s real signature is
+  `StateType | date | datetime | Decimal`. Widened the override to match.
+
+Also removed dead code ruff caught along the way: an unused
+`usccb_date_str` computation and an unused `timedelta` import.
+
+With the suite green, wired `test.yml` (no `bundle-drift` job; no
+frontend) and `release.yml` into CI. This repository is tree-installed
+(`hacs.json` has `"zip_release": false`), so `release.yml` has no archive,
+SBOM, checksum, or attestation steps: HACS reads
+`custom_components/catholic_calendar` directly from the tagged tree, and
+the release exists to give that tag a changelog, not to distribute a signed
+asset. `prepare-release.yml` (zero-touch CalVer bump PRs) is still not
+added; it needs the release-automation GitHub App installed first, and the
+baseline document is explicit that a repository can release without it by
+running `scripts/set_version.py` on a branch by hand.
+
 ## 2026-09-03: `en.json` moved to `translations/en.json`
 
 The config flow strings shipped as `custom_components/catholic_calendar/en.json`.

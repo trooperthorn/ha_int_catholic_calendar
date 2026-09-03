@@ -11,6 +11,8 @@ import xml.etree.ElementTree as ET
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
@@ -50,12 +52,12 @@ class CatholicCalendar(CalendarEntity):
         self._attr_name = name
         self._attr_unique_id = unique_id
         
-        self._attr_device_info = {
-            "identifiers": {("catholic_calendar", unique_id)},
-            "name": name,
-            "manufacturer": "Catholic Calendar",
-            "entry_type": "service",
-        }
+        self._attr_device_info = DeviceInfo(
+            identifiers={("catholic_calendar", unique_id)},
+            name=name,
+            manufacturer="Catholic Calendar",
+            entry_type=DeviceEntryType.SERVICE,
+        )
         
         self._years_loaded: list[int] = []
         self._events: list[CalendarEvent] = []
@@ -95,7 +97,7 @@ class CatholicCalendar(CalendarEntity):
                 
                 root = ET.fromstring(xml_data)
                 channel = root.find('channel')
-                if not channel:
+                if channel is None:
                     return reflections
 
                 for item in channel.findall('item'):
@@ -190,8 +192,7 @@ class CatholicCalendar(CalendarEntity):
                 grade_name = str(raw_grade)
 
             color = str(festivity.get('liturgical_color', 'Unknown')).capitalize()
-            usccb_date_str = date_val.strftime('%m%d%y')
-            usccb_url = f"https://bible.usccb.org/bible/readings/"
+            usccb_url = "https://bible.usccb.org/bible/readings/"
             
             # Check for live RSS reflection matching this date
             rss_entry = rss_data.get(date_val)
