@@ -2,11 +2,11 @@
   "domain": "catholic_calendar",
   "name": "Catholic Calendar",
   "codeowners": ["@trooperthorn"],
-  "version": "1.0.0",
-  "documentation": "https://github.com/trooperthorn/hass-catholic-calendar",
-  "issue_tracker": "https://github.com/trooperthorn/hass-catholic-calendar/issues",
+  "config_flow": true,
   "dependencies": [],
-  "requirements": [],
+  "documentation": "https://github.com/trooperthorn/ha_int_catholic_calendar",
   "iot_class": "calculated",
-  "config_flow": true
+  "issue_tracker": "https://github.com/trooperthorn/ha_int_catholic_calendar/issues",
+  "requirements": [],
+  "version": "2026.09.03.1"
 }

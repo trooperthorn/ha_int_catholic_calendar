@@ -1,0 +1,8 @@
+{
+  "tag_prefix": "",
+  "timezone": "America/Chicago",
+  "release_paths": ["custom_components/catholic_calendar"],
+  "version_fields": [
+    {"path": "custom_components/catholic_calendar/manifest.json", "kind": "json", "key": "version"}
+  ]
+}
