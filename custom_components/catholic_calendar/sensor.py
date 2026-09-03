@@ -14,7 +14,6 @@ from homeassistant.const import CONF_NAME
 
 from .calendar_generator import CalendarGenerator
 import datetime
-from datetime import timedelta
 from .liturgical_grade import LiturgicalGrade
 
 __version__ = "1.0.1"
@@ -23,7 +22,7 @@ COMPONENT_REPO = (
     "https://github.com/jmacri01/homeassistant-custom-components-catholic-calendar"
 )
 
-REQUIREMENTS = []
+REQUIREMENTS: list[str] = []
 
 DEFAULT_THUMBNAIL = "https://www.home-assistant.io/images/favicon-192x192-full.png"
 
@@ -66,7 +65,7 @@ class CatholicCalendarSensor(SensorEntity):
         self._festivities: dict[datetime.datetime, list[dict[str, str]]] = {}
         self._todays_festivities: list[dict[str, str]] = []
         self._attr_extra_state_attributes = {"festivities": self._todays_festivities}
-        self._years_loaded = []
+        self._years_loaded: list[int] = []
         _LOGGER.debug("CatholicCalendarSensor initialized - %s", self)
 
     def __repr__(self: CatholicCalendarSensor) -> str:
@@ -100,7 +99,7 @@ class CatholicCalendarSensor(SensorEntity):
             self._todays_festivities.append(festivity)
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType | datetime.date:
         """Return the state of the sensor."""
         return dt_util.now().date()
 

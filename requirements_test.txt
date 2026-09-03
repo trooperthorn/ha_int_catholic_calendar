@@ -1,0 +1,8 @@
+pytest==9.0.3
+pytest-asyncio==1.4.0
+# Install pytest-homeassistant-custom-component first, as shown in
+# .github/workflows/test.yml; its current release metadata still pins a
+# Home Assistant 2026.9 beta, and this pin re-resolves it to stable.
+mypy==2.3.1
+ruff==0.12.11
+homeassistant==2026.9.0
