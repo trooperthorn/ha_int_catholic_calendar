@@ -1,12 +1,14 @@
 {
   "domain": "catholic_calendar",
   "name": "Catholic Calendar",
-  "codeowners": ["@trooperthorn"],
+  "codeowners": [
+    "@trooperthorn"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/trooperthorn/ha_int_catholic_calendar",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/trooperthorn/ha_int_catholic_calendar/issues",
   "requirements": [],
-  "version": "2026.09.03.1"
+  "version": "2026.09.04.1"
 }
