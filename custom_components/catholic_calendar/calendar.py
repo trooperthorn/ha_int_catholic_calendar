@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import logging
 import datetime
+import html
 import urllib.parse
 import re
+from html.parser import HTMLParser
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -43,6 +45,52 @@ async def async_setup_entry(
     )
 
 
+class _TextExtractor(HTMLParser):
+    """Collect visible text from HTML, dropping script and style content.
+
+    A real parser handles what a regular expression cannot: tag names in any
+    case, attributes containing ">", and unterminated tags.
+    """
+
+    _SKIP = {"script", "style"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self._parts: list[str] = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in self._SKIP:
+            self._skip_depth += 1
+        elif tag == "br":
+            self._parts.append("\n")
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "br":
+            self._parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._SKIP:
+            self._skip_depth = max(0, self._skip_depth - 1)
+        elif tag == "p":
+            self._parts.append("\n\n")
+
+    def handle_data(self, data: str) -> None:
+        if not self._skip_depth:
+            self._parts.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        if not self._skip_depth:
+            self._parts.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        if not self._skip_depth:
+            self._parts.append(f"&#{name};")
+
+    def text(self) -> str:
+        return "".join(self._parts)
+
+
 class CatholicCalendar(CalendarEntity):
     """Representation of a Catholic Calendar."""
 
@@ -66,20 +114,13 @@ class CatholicCalendar(CalendarEntity):
         """Strip HTML tags and clean up whitespace for calendar display."""
         if not raw_html:
             return ""
-        clean = re.sub(r'<script.*?>.*?</script>', '', raw_html, flags=re.DOTALL)
-        clean = re.sub(r'<style.*?>.*?</style>', '', clean, flags=re.DOTALL)
-        clean = re.sub(r'<br\s*/?>', '\n', clean)
-        clean = re.sub(r'</p>', '\n\n', clean)
-        clean = re.sub(r'<.*?>', '', clean)
-        clean = (
-            clean.replace('&amp;', '&')
-            .replace('&nbsp;', ' ')
-            .replace('&#8217;', "'")
-            .replace('&#8211;', '-')
-            .replace('&#8220;', '"')
-            .replace('&#8221;', '"')
-        )
-        clean = re.sub(r'\n\s*\n', '\n\n', clean)
+        parser = _TextExtractor()
+        parser.feed(raw_html)
+        parser.close()
+        clean = html.unescape(parser.text())
+        for typographic, plain in (("’", "'"), ("‘", "'"), ("“", '"'), ("”", '"'), ("–", "-"), ("—", "-"), (" ", " ")):
+            clean = clean.replace(typographic, plain)
+        clean = re.sub(r"\n\s*\n", "\n\n", clean)
         return clean.strip()
 
     async def _fetch_rss_reflections(self) -> dict:

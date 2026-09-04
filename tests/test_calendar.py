@@ -117,3 +117,16 @@ def test_clean_html_handles_empty_input():
 
 def _fake_event(start: datetime.date):
     return type("Event", (), {"start": start})()
+
+
+def test_clean_html_drops_script_in_any_case_and_keeps_text(hass):
+    entity = CatholicCalendar(name="x", unique_id="y", hass=hass)
+    raw = (
+        '<p>Keep this.</p><SCRIPT type="text/javascript">alert("no")</SCRIPT>'
+        '<Style>p{color:red}</Style><p title="a > b">And this &amp; that.</p>'
+    )
+    cleaned = entity._clean_html(raw)
+    assert "alert" not in cleaned
+    assert "color" not in cleaned
+    assert "Keep this." in cleaned
+    assert "And this & that." in cleaned
