@@ -1,12 +1,4 @@
-# Reconciles the version on main into a complete GitHub Release. A normal
-# merge is the release trigger: maintainers never create or push tags by
-# hand. Reruns are safe; an already-published version is left immutable.
-#
-# This repository is tree-installed (hacs.json has "zip_release": false), so
-# HACS installs custom_components/catholic_calendar directly from the tagged
-# tree rather than from a release asset. There is no archive, SBOM,
-# checksum, or attestation step; the release exists to give the tag a
-# changelog and a fixed point users can point HACS at.
+# A merge to main is the release trigger; see docs/README.md.
 name: Release
 
 on:
